@@ -11,6 +11,12 @@ import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofenceStatusCodes;
+import com.google.android.gms.location.GeofencingEvent;
+
+import java.util.List;
+
 import ro.pub.cs.systems.eim.lab10.R;
 import ro.pub.cs.systems.eim.lab10.googlemapsgeofencing.general.Constants;
 import ro.pub.cs.systems.eim.lab10.googlemapsgeofencing.view.GoogleMapsGeofenceEventActivity;
@@ -28,15 +34,40 @@ public class GeofenceTrackerIntentService extends IntentService {
 
         // TODO: exercise 9
         // obtain GeofencingEvent from the calling intent, using GeofencingEvent.fromIntent(intent);
+        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         // check whether the GeofencingEvent hasError(), log it and exit the method
-        // check the specific error from GeofenceStatusCodes (GEOFENCE_NOT_AVAILABLE, GEOFENCE_TOO_MANY_GEOFENCES, GEOFENCE_TOO_MANY_PENDING_INTENTS)
+        if (geofencingEvent.hasError()) {
+            // check the specific error from GeofenceStatusCodes (GEOFENCE_NOT_AVAILABLE, GEOFENCE_TOO_MANY_GEOFENCES, GEOFENCE_TOO_MANY_PENDING_INTENTS)
+            switch (geofencingEvent.getErrorCode()) {
+                case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
+                    Log.e(Constants.TAG, "Geofence is unavailable!");
+                case GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES:
+                    Log.e(Constants.TAG, "The number of geofences is too damn high!");
+                case GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS:
+                    Log.e(Constants.TAG, "The number of pending intents is too damn high!");
+            }
+            return;
+        }
         // get the geofence transition using getGeofenceTransition() method
+        int geofenceTransition = geofencingEvent.getGeofenceTransition();
         // if transition is only Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
         // build a detailed message
         // - include the transition type
         // - include the request identifier (getRequestId()) for each  geofence that triggered the event (getTriggeringGeofences())
         // send a notification with the detailed message (sendNotification())
-
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER || geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+            for (Geofence geofence : triggeringGeofences) {
+                if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                    String message = "Notification details: The user has entered the geofence area: " + geofence.getRequestId();
+                    sendNotification(message);
+                }
+                if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                    String message = "Notification details: The user has exited the geofence area: " + geofence.getRequestId();
+                    sendNotification(message);
+                }
+            }
+        }
     }
 
     private void sendNotification(String notificationDetails) {

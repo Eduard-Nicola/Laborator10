@@ -19,4 +19,6 @@ public interface Constants {
     public static String LOCATION_UPDATES_STATUS = "LocationUpdatesStatus";
     public static String LAST_LOCATION = "LastLocation";
 
+    String STOP_LOCATION_UPDATES = "Stop Location Updates";
+    String START_LOCATION_UPDATES = "Start Location Updates";
 }
